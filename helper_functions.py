@@ -44,6 +44,23 @@ def create_kmer_count(kmer_counts, kmer_sequence):
   return kmer_counts
 
 
+# generates all unique kmer sequences given a dataset
+def generate_unique_kmers(df, k):
+    all_kmer_sequences = []
+    for i, row in df.iterrows():
+      barcode = row['Barcode']
+
+      # remove the suffix
+      parts = barcode.split("-")
+      barcode = parts[0]
+
+      all_kmer_sequences.extend(k_mer_sequences(barcode, k))
+
+    unique_kmers = list(set(all_kmer_sequences))
+
+    return unique_kmers
+
+
 # pass in as input: all_cell_types = df['Cell.Type']
 def generate_cell_type_mapping(all_cell_types):
    # Examine the different cell types for our data
@@ -74,41 +91,37 @@ def create_cell_type_age_feature(df):
     return interaction_df
 
 
-def run_pca(all_one_hot_encodings, n_components):
-   # PCA to transform the one-hot encodings of barcodes
+# def run_pca(all_one_hot_encodings, n_components):
+#     # First flatten all_one_hot_encodings and then turn it into a dataframe
+#     flattened_one_hot_encodings = [ [value for tupl in sequence for value in tupl] for sequence in all_one_hot_encodings ]
+
+#     X_normalized = pd.DataFrame(flattened_one_hot_encodings)
+
+#     # Define number of principal components to retain
+#     pca = PCA(n_components=n_components)
+#     X_pca = pca.fit_transform(X_normalized)
+#     pca_df = pd.DataFrame(data = X_pca, columns = ['PC1', 'PC2', 'PC3', 'PC4', 'PC5'])
+
+#     print(pca_df.head())
+#     print("Explained variance by each component:", pca.explained_variance_ratio_)
+
+#     return pca_df
+
+
+def run_pca(df):
     scaler = StandardScaler()
+    df_scaled = scaler.fit_transform(df)
 
-    # First flatten all_one_hot_encodings and then turn it into a dataframe
-    flattened_one_hot_encodings = [ [value for tupl in sequence for value in tupl] for sequence in all_one_hot_encodings ]
+    # Initialize PCA, you can modify the number of components
+    pca = PCA(n_components=2)  # Adjust components based on your needs
+    principal_components = pca.fit_transform(df_scaled)
 
-    df = pd.DataFrame(flattened_one_hot_encodings)
-    X_normalized = scaler.fit_transform(df)
-
-    # Define number of principal components to retain
-    pca = PCA(n_components=n_components)
-    X_pca = pca.fit_transform(X_normalized)
-    pca_df = pd.DataFrame(data = X_pca, columns = ['PC1', 'PC2', 'PC3', 'PC4', 'PC5'])
-
-    print(pca_df.head())
-    print("Explained variance by each component:", pca.explained_variance_ratio_)
+    # Create a DataFrame with the principal components
+    pca_df = pd.DataFrame(data=principal_components,
+                          columns=['PC1', 'PC2'],
+                          index=df.index)
 
     return pca_df
-
-
-def run_pca_kmer(all_kmer_sequences, n_components):
-    scaler = StandardScaler()
-    # First flatten all_kmer_sequences and then turn it into a dataframe
-    flattened_kmer_encodings = [element for sequence in all_kmer_sequences for tup in sequence for element in tup]
-    df = pd.DataFrame(flattened_kmer_encodings)
-    X_normalized = scaler.fit_transform(df)
-
-    # Define number of principal components to retain
-    n_components = 3
-    pca = PCA(n_components=n_components)
-    X_pca = pca.fit_transform(X_normalized)
-    pca_kmer_df = pd.DataFrame(data = X_pca, columns = ['PC1', 'PC2', 'PC3'])
-    print(pca_kmer_df.head())
-    print("Explained variance by each component:", pca.explained_variance_ratio_)
 
 
 def visualize_pca(pca_df):
