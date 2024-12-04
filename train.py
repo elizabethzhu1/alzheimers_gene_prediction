@@ -113,7 +113,7 @@ y_test = y_test.to_numpy()
 
 correct = 0
 for i in range(len(predictions)):
-    if predictions[i] == y_test[i]:
+    if int(predictions[i]) == y_test[i]:
         correct += 1
 
 print("Test Accuracy:", correct / len(y_test))
