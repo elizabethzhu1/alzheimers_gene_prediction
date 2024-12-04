@@ -85,14 +85,23 @@ print('unique_kmers length', len(unique_kmers))
 
 df_kmers = pd.DataFrame(columns=unique_kmers)
 
-df = pd.concat([df, df_kmers], axis=1)
 
-for i, row in df.iterrows():
-  for kmer in unique_kmers:
-    if kmer in barcode:
-      df.at[i, kmer] = 1
-    else:
-      df.at[i, kmer] = 0
+# Concatenate DF and DF_kmers 
+# df = pd.concat([df, df_kmers], axis=1)
+
+pca_kmers_df = pd.read_csv('pca_output.csv')
+f = pd.concat([df, pca_kmers_df], axis=1)
+
+
+# for i, row in df.iterrows():
+#   for kmer in unique_kmers:
+#     if kmer in barcode:
+#       df.at[i, kmer] = 1
+#     else:
+#       df.at[i, kmer] = 0
+
+for kmer in unique_kmers:
+    df[kmer] = df.index.map(lambda x: 1 if kmer in barcodes[x] else 0)
 
 # print(df.shape)
 
