@@ -39,8 +39,6 @@ class CNN(nn.Module):
     def __init__(self):
         super().__init__()
 
-        # play around with parameters
-
         self.conv1 = nn.Conv1d(in_channels=1, out_channels=16, kernel_size=1)
 
         self.pool = nn.MaxPool1d(kernel_size=2, stride=2)  # downsamples by 2x
@@ -85,8 +83,11 @@ class CNN(nn.Module):
 model = CNN()
 
 # Define loss and optimizer
-logit_loss = nn.BCEWithLogitsLoss()
+criterion = nn.BCEWithLogitsLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+y_test = y_test.to_numpy()
+y_train = y_train.to_numpy()
 
 # Training loop
 epochs = 5
@@ -95,25 +96,36 @@ for epoch in range(epochs):
     for batch_X, batch_y in dataloader:
         optimizer.zero_grad()
         outputs = model(batch_X)
-        loss = logit_loss(outputs, batch_y)
+        loss = criterion(outputs, batch_y)
         loss.backward()
         optimizer.step()
     
-    print(f"Epoch {epoch+1}/{epochs}, Training Loss: {loss.item():.4f}")
-    # print("Training Accuracy:", )
+    print(f"Epoch {epoch+1}/{epochs}, Loss: {loss.item():.4f}")
 
-# Evaluate the model
-model.eval()
-with torch.no_grad():
-    predictions = model(X_test_tensor).squeeze()
-    predictions = (predictions > 0.5).float()  # Convert to binary predictions
-    print("Predictions:", predictions.numpy())
+    # Evaluate the model on train dataset
+    model.eval()
+    with torch.no_grad():
+        predictions = model(X_tensor).squeeze()
+        predictions = (predictions > 0.5).float()  # Convert to binary predictions
+        print("Predictions:", predictions.numpy())
 
-y_test = y_test.to_numpy()
+    correct = 0
+    for i in range(len(predictions)):
+        if int(predictions[i]) == y_train[i]:
+            correct += 1
 
-correct = 0
-for i in range(len(predictions)):
-    if int(predictions[i]) == y_test[i]:
-        correct += 1
+    print("Train Accuracy is :", correct / len(y_train), " after epoch ", epoch)
 
-print("Test Accuracy:", correct / len(y_test))
+    # Evaluate the model on test dataset
+    model.eval()
+    with torch.no_grad():
+        predictions = model(X_test_tensor).squeeze()
+        predictions = (predictions > 0.5).float()  # Convert to binary predictions
+        print("Predictions:", predictions.numpy())
+
+    correct = 0
+    for i in range(len(predictions)):
+        if int(predictions[i]) == y_test[i]:
+            correct += 1
+
+    print("Test Accuracy is :", correct / len(y_test), " after epoch ", epoch)
