@@ -39,6 +39,8 @@ class CNN(nn.Module):
     def __init__(self):
         super().__init__()
 
+        # play around with parameters
+
         self.conv1 = nn.Conv1d(in_channels=1, out_channels=16, kernel_size=1)
 
         self.pool = nn.MaxPool1d(kernel_size=2, stride=2)  # downsamples by 2x
@@ -83,7 +85,7 @@ class CNN(nn.Module):
 model = CNN()
 
 # Define loss and optimizer
-criterion = nn.BCEWithLogitsLoss()
+logit_loss = nn.BCEWithLogitsLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 # Training loop
@@ -93,11 +95,12 @@ for epoch in range(epochs):
     for batch_X, batch_y in dataloader:
         optimizer.zero_grad()
         outputs = model(batch_X)
-        loss = criterion(outputs, batch_y)
+        loss = logit_loss(outputs, batch_y)
         loss.backward()
         optimizer.step()
     
-    print(f"Epoch {epoch+1}/{epochs}, Loss: {loss.item():.4f}")
+    print(f"Epoch {epoch+1}/{epochs}, Training Loss: {loss.item():.4f}")
+    # print("Training Accuracy:", )
 
 # Evaluate the model
 model.eval()
