@@ -1,6 +1,5 @@
-# Read the barcode column from our dataset
 import pandas as pd
-from helper_functions import encoding, k_mer_sequences, create_kmer_count, run_pca, visualize_pca, generate_cell_type_mapping, create_cell_type_age_feature
+from helper_functions import encoding, k_mer_sequences, create_kmer_count, run_pca, visualize_pca, generate_cell_type_mapping, create_cell_type_age_feature, generate_unique_kmers, run_pca
 from sklearn.preprocessing import StandardScaler
 
 # Read in our data
@@ -10,156 +9,78 @@ df = df.drop(index=0).reset_index(drop=True)
 # Shuffle the DataFrame rows
 df = df.sample(frac=1).reset_index(drop=True)
 
-# before preprocessing
-original_df = df.copy()
-
-# df = df.sample(n=100, random_state=42)
-
-# Rename our columns
+# Rename columns
 df.columns = ['Barcode', 'SampleID', 'Diagnosis', 'Batch', 'Cell.Type', 'Cluster', 'Age', 'Sex', 'PMI', 'Tangle.Stage', 'Plaque.Stage', 'RIN']
 
-# Retrieve diagnosis
-diagnosis_raw = df['Diagnosis']
+# Retrieve diagnosis column
+diagnosis = df['Diagnosis'].to_list()
 
-diagnosis = []
-for d in diagnosis_raw:
-    diagnosis.append(d)
-
-# Filter our dataset
-AD = 0
-control = 0
-for d in diagnosis:
-  if d == 'AD':
-    AD += 1
-  else:
-    control += 1
-
-# Filtering Dataset
+# Sample dataset to ensure equal quantity of 'AD' + 'Control' diagnosis
 AD_filtered_sample = df[df['Diagnosis'] == 'AD'].sample(20000)
 control_filtered_sample = df[df['Diagnosis'] == 'Control'].sample(20000)
 df = pd.concat([AD_filtered_sample, control_filtered_sample], ignore_index=True)
 
-# Remove "-1" in barcodes to preserve our features
-barcode_column = df['Barcode']
-barcodes = []
-for barcode in barcode_column:
-    parts = barcode.split("-")
-    barcodes.append(parts[0])
-# print("Barcodes are: ", barcodes)
-
-# # convert AD/Control diagnosis into binary values
-# df['Diagnosis'] = df['Diagnosis'].map({'AD': 1, 'Control': 0})  # Binary encoding
-
-# Process Diagnosis Data
+# Encode diagnosis data into y_labels column
 y_labels = []
-
 for diag in df["Diagnosis"]:
   if diag == "AD":
     y_labels.append(1)
   else:
     y_labels.append(0)
-  
+
 y_labels = pd.DataFrame(y_labels)
 
-# remove labels from df
+# Remove y_labels from df
 df = df.drop(columns='Diagnosis')
 
-# Process every single DNA encoding
-# all_one_hot_encodings = []
-# for barcode in barcodes:
-#   one_hot_encoding = encoding(barcode)
-#   all_one_hot_encodings.append(one_hot_encoding)
-
-# all_kmer_sequences stores the kmer_sequence of each barcode
-# all_kmer_counts stores the count of each kmer_sequence
-all_kmer_sequences = []
-all_kmer_counts = []
-for barcode in barcodes:
-  # the kmer_sequence for each barcode
-  kmer_sequences = k_mer_sequences(barcode, 3)
-  all_kmer_sequences.extend(kmer_sequences)
-  all_kmer_counts.append(create_kmer_count({}, kmer_sequences))
-
-unique_kmers = list(set(all_kmer_sequences))
-print('unique_kmers length', len(unique_kmers))
-
-df_kmers = pd.DataFrame(columns=unique_kmers)
-
-
-# Concatenate DF and DF_kmers 
-# df = pd.concat([df, df_kmers], axis=1)
-
-pca_kmers_df = pd.read_csv('pca_output.csv')
-f = pd.concat([df, pca_kmers_df], axis=1)
-
-
-# for i, row in df.iterrows():
-#   for kmer in unique_kmers:
-#     if kmer in barcode:
-#       df.at[i, kmer] = 1
-#     else:
-#       df.at[i, kmer] = 0
-
-for kmer in unique_kmers:
-    df[kmer] = df.index.map(lambda x: 1 if kmer in barcodes[x] else 0)
-
-# print(df.shape)
-
-# Get the DF with unique_kmers in them
-df_selected = df[unique_kmers]
-df_selected.to_csv('data/kmer_sequences.csv', index=False)
-
-# add feature of cell type + age interaction
+# Feature-engineer: add cell type + age interaction feature
 all_cell_types = df['Cell.Type']
 cell_type_mapping = generate_cell_type_mapping(all_cell_types)
-
-print("Cell Type Mapping:", cell_type_mapping)
 
 interaction_columns = create_cell_type_age_feature(df)
 
 df = pd.concat([df, interaction_columns], axis=1)
 
-print(df)
+# Generate kmers
+two_mers = generate_unique_kmers(df, 2)
+three_mers = generate_unique_kmers(df, 3)
 
-# numerical_features = ['Age', 'PMI', 'RIN', 'Cell.Type_EX_Age', 'Cell.Type_INH_Age', 'Cell.Type_MG_Age', 'Cell.Type_ODC_Age', 'Cell.Type_OPC_Age', 'Cell.Type_PER.END_Age']
+print('two_mers length', len(two_mers))
+print('three_mers length', len(three_mers))
 
-# Remove non-numerical columns
-# df = df.select_dtypes(include=['int64', 'float64'])
+unique_kmers = two_mers + three_mers
+# unique_kmers = three_mers
+ 
+df_kmers = pd.DataFrame(columns=unique_kmers)
 
-# print("df num", df)
+# Populate kmer columns (if a given kmer appears in the sequence or not)
+for kmer in unique_kmers:
+    # df_kmers[kmer] = df.index.map(lambda x: 1 if kmer in df['Barcode'][x] else 0)
+    
+    # Set column to count of kmers in sequence
+    df_kmers[kmer] = df.index.map(lambda x: df['Barcode'][x].count(kmer) if kmer in df['Barcode'][x] else 0)
 
-# Normalize numerical features
-# scaler = StandardScaler()
-# df = scaler.fit_transform(df)
-
-# run PCA on one hot encodings
-# pca_df = run_pca(all_one_hot_encodings, 5)  # adjust number of components
-
-# run PCA on kmer sequences
-# pca_kmer_df = run_pca(all_one_hot_encodings, 5)  # adjust number of components
-
-# visualize PCA
-# visualize_pca(pca_kmer_df)
-
-# print("DF", df)
-
-# Print the result
-# print(numerical_df)
-
+# Only include numerical_features
 numerical_features = [
     'Age', 'RIN', 'Cell.Type_EX_Age', 'Cell.Type_INH_Age',
     'Cell.Type_MG_Age', 'Cell.Type_ODC_Age', 'Cell.Type_OPC_Age',
     'Cell.Type_PER.END_Age'
 ]
 
-numerical_features.extend(unique_kmers)
+print("features", numerical_features)
+print("num features", len(numerical_features))
 
-print(numerical_features)
+# Add unique kmer sequences as columns to df
+pca_kmers_df = run_pca(df_kmers)
 
-df = df[numerical_features]
+# Add pca-reduced kmer sequences as columns to df
+df_pca = pd.concat([df[numerical_features], pca_kmers_df], axis=1)
+df = pd.concat([df[numerical_features], df_kmers], axis=1)
+
+print("df.columns", df.columns)
 
 df.to_csv('data/processed_X.csv', index=False)
+df_pca.to_csv('data/processed_X_pca.csv', index=False)
 y_labels.to_csv('data/processed_y.csv', index=False)
-
 
 # add main() function and pass in input data as argument
