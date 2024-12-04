@@ -94,8 +94,11 @@ for i, row in df.iterrows():
     else:
       df.at[i, kmer] = 0
 
-# print(df)
 # print(df.shape)
+
+# Get the DF with unique_kmers in them
+df_selected = df[unique_kmers]
+df_selected.to_csv('data/kmer_sequences.csv', index=False)
 
 # add feature of cell type + age interaction
 all_cell_types = df['Cell.Type']
