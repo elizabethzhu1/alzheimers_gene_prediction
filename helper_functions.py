@@ -75,13 +75,15 @@ def generate_cell_type_mapping(all_cell_types):
 
 
 def create_cell_type_age_feature(df):
+    # Convert the categorical variables into indicator variables with new columns
     cell_df = pd.get_dummies(df, columns=['Cell.Type'], drop_first=True)
     scaler = StandardScaler()
     cell_df['Age'] = scaler.fit_transform(cell_df[['Age']])
 
+    # Identify the "Age" column and "Cell" column and create interaction features between them
     for column in cell_df.columns:
-        print(column)
-        if 'Cell' in column:  # Identify one-hot encoded cell type columns
+        # Identify whether current column is a cell type
+        if 'Cell' in column:
             cell_df[column] = cell_df[column].astype(int)
             cell_df[f'{column}_Age'] = cell_df[column] * cell_df['Age']
 
@@ -90,46 +92,15 @@ def create_cell_type_age_feature(df):
 
     return interaction_df
 
-
-# def run_pca(all_one_hot_encodings, n_components):
-#     # First flatten all_one_hot_encodings and then turn it into a dataframe
-#     flattened_one_hot_encodings = [ [value for tupl in sequence for value in tupl] for sequence in all_one_hot_encodings ]
-
-#     X_normalized = pd.DataFrame(flattened_one_hot_encodings)
-
-#     # Define number of principal components to retain
-#     pca = PCA(n_components=n_components)
-#     X_pca = pca.fit_transform(X_normalized)
-#     pca_df = pd.DataFrame(data = X_pca, columns = ['PC1', 'PC2', 'PC3', 'PC4', 'PC5'])
-
-#     print(pca_df.head())
-#     print("Explained variance by each component:", pca.explained_variance_ratio_)
-
-#     return pca_df
-
-
 def run_pca(df):
+    # Make sure to scale data 
     scaler = StandardScaler()
     df_scaled = scaler.fit_transform(df)
 
-    # Initialize PCA, you can modify the number of components
-    pca = PCA(n_components=2)  # Adjust components based on your needs
+    # Initialize PCA 
+    pca = PCA(n_components=2)
     principal_components = pca.fit_transform(df_scaled)
 
-    # Create a DataFrame with the principal components
-    pca_df = pd.DataFrame(data=principal_components,
-                          columns=['PC1', 'PC2'],
-                          index=df.index)
-
+    # Create PCA Data frame 
+    pca_df = pd.DataFrame(data=principal_components, columns=['PC1', 'PC2'], index=df.index)
     return pca_df
-
-
-def visualize_pca(pca_df):
-   # Visualization for PCA on the first two principal components of the kmer sequences
-    plt.figure(figsize=(8, 6))
-    plt.scatter(pca_df['PC1'], pca_df['PC2'])
-    plt.xlabel('Principal Component 1')
-    plt.ylabel('Principal Component 2')
-    plt.title('PCA of Kmer sequences for DNA')
-    plt.grid(True)
-    plt.show()
