@@ -6,9 +6,6 @@ from sklearn.preprocessing import StandardScaler
 df = pd.read_csv('data/alzheimers_RNA_data.csv', header=None)
 df = df.drop(index=0).reset_index(drop=True)
 
-# Shuffle the DataFrame rows
-df = df.sample(frac=1).reset_index(drop=True)
-
 # Rename columns
 df.columns = ['Barcode', 'SampleID', 'Diagnosis', 'Batch', 'Cell.Type', 'Cluster', 'Age', 'Sex', 'PMI', 'Tangle.Stage', 'Plaque.Stage', 'RIN']
 
