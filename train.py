@@ -17,7 +17,19 @@ def main(dataset):
     X = pd.read_csv(dataset)
     y_labels = pd.read_csv('data/processed_y.csv')
 
-    x_train, x_test, y_train, y_test = train_test_split(X, y_labels, test_size=0.2, random_state=42)
+    # Split dataset into train, test, validation
+    x_train = X.loc[0:61262]
+    x_test = X.loc[61262:61421]
+    x_valid = X.loc[61421:61473]
+    y_train = y_labels.loc[0:61262]
+    y_test = y_labels.loc[61262:61421]
+    y_valid = y_labels.loc[61421:61473]
+
+    # print(y_valid)
+
+    # print("Train set length: ", len(x_train))
+
+    # x_train, x_test, y_train, y_test = train_test_split(X, y_labels, test_size=0.2, random_state=42)
 
     num_features = x_train.shape[1]
 
@@ -28,10 +40,15 @@ def main(dataset):
     # print(X.shape[0])
     # print(y_labels.shape[0])
 
-    # reshape for CNN input (PyTorch expects tensors)
+    # Get the training tensors and also shuffle them
     X_tensor = torch.tensor(x_train.values, dtype=torch.float32).unsqueeze(1)
     y_tensor = torch.tensor(y_train.values, dtype=torch.float32).squeeze(1)
 
+    # Validation Tensors
+    X_valid_tensor = torch.tensor(x_valid.values, dtype=torch.float32).unsqueeze(1)
+    y_valid_tensor = torch.tensor(y_valid.values, dtype=torch.float32).squeeze(1)
+
+    # Testing Tensors
     X_test_tensor = torch.tensor(x_test.values, dtype=torch.float32).unsqueeze(1)
     y_test_tensor = torch.tensor(y_test.values, dtype=torch.float32).squeeze(1)
 
@@ -87,6 +104,7 @@ def main(dataset):
 
     y_test = y_test.to_numpy()
     y_train = y_train.to_numpy()
+    y_valid = y_valid.to_numpy()
 
     # Training loop
     epochs = 5
@@ -117,19 +135,32 @@ def main(dataset):
 
         print("Train Accuracy is :", correct / len(y_train), " after epoch ", epoch)
 
-    # Evaluate the model on test dataset
+    # # Evaluate the model on test dataset
+    # model.eval()
+    # with torch.no_grad():
+    #     predictions = model(X_test_tensor).squeeze()
+    #     predictions = (predictions > 0.5).float()  # Convert to binary predictions
+    #     print("Predictions:", predictions.numpy())
+
+    # correct = 0
+    # for i in range(len(predictions)):
+    #     if int(predictions[i]) == y_test[i]:
+    #         correct += 1
+
+    # print("Test Accuracy is :", correct / len(y_test), " after epoch ", epoch)
+
+    # Evaluate the model on validation dataset to get the best hyperparameters
     model.eval()
     with torch.no_grad():
-        predictions = model(X_test_tensor).squeeze()
+        predictions = model(X_valid_tensor).squeeze()
         predictions = (predictions > 0.5).float()  # Convert to binary predictions
-        print("Predictions:", predictions.numpy())
 
     correct = 0
     for i in range(len(predictions)):
-        if int(predictions[i]) == y_test[i]:
+        if int(predictions[i]) == y_valid[i]:
             correct += 1
 
-    print("Test Accuracy is :", correct / len(y_test), " after epoch ", epoch)
+    print("Validation Accuracy is :", correct / len(y_valid), " after epoch ", epoch)
 
 
 if __name__ == "__main__":
