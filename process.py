@@ -6,19 +6,11 @@ from sklearn.preprocessing import StandardScaler
 df = pd.read_csv('data/alzheimers_RNA_data.csv', header=None)
 df = df.drop(index=0).reset_index(drop=True)
 
-# Shuffle the DataFrame rows
-df = df.sample(frac=1).reset_index(drop=True)
-
 # Rename columns
 df.columns = ['Barcode', 'SampleID', 'Diagnosis', 'Batch', 'Cell.Type', 'Cluster', 'Age', 'Sex', 'PMI', 'Tangle.Stage', 'Plaque.Stage', 'RIN']
 
 # Retrieve diagnosis column
 diagnosis = df['Diagnosis'].to_list()
-
-# Sample dataset to ensure equal quantity of 'AD' + 'Control' diagnosis
-AD_filtered_sample = df[df['Diagnosis'] == 'AD'].sample(20000)
-control_filtered_sample = df[df['Diagnosis'] == 'Control'].sample(20000)
-df = pd.concat([AD_filtered_sample, control_filtered_sample], ignore_index=True)
 
 # Encode diagnosis data into y_labels column
 y_labels = []
