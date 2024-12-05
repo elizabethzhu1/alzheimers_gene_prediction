@@ -2,20 +2,15 @@ import pandas as pd
 from helper_functions import encoding, k_mer_sequences, create_kmer_count, run_pca, visualize_pca, generate_cell_type_mapping, create_cell_type_age_feature, generate_unique_kmers, run_pca
 from sklearn.preprocessing import StandardScaler
 
-# Read in our data
+# Read in our Alzheimers RNA Data
 df = pd.read_csv('data/alzheimers_RNA_data.csv', header=None)
 df = df.drop(index=0).reset_index(drop=True)
 
 # Rename columns
 df.columns = ['Barcode', 'SampleID', 'Diagnosis', 'Batch', 'Cell.Type', 'Cluster', 'Age', 'Sex', 'PMI', 'Tangle.Stage', 'Plaque.Stage', 'RIN']
 
-# Retrieve diagnosis column
+# Retrieve diagnosis column (RNA Sequence)
 diagnosis = df['Diagnosis'].to_list()
-
-# Sample dataset to ensure equal quantity of 'AD' + 'Control' diagnosis
-AD_filtered_sample = df[df['Diagnosis'] == 'AD'].sample(20000)
-control_filtered_sample = df[df['Diagnosis'] == 'Control'].sample(20000)
-df = pd.concat([AD_filtered_sample, control_filtered_sample], ignore_index=True)
 
 # Encode diagnosis data into y_labels column
 y_labels = []
@@ -33,9 +28,9 @@ df = df.drop(columns='Diagnosis')
 # Feature-engineer: add cell type + age interaction feature
 all_cell_types = df['Cell.Type']
 cell_type_mapping = generate_cell_type_mapping(all_cell_types)
-
 interaction_columns = create_cell_type_age_feature(df)
 
+# Modify new Data Frame
 df = pd.concat([df, interaction_columns], axis=1)
 
 # Generate kmers
@@ -45,15 +40,14 @@ three_mers = generate_unique_kmers(df, 3)
 print('two_mers length', len(two_mers))
 print('three_mers length', len(three_mers))
 
+# Use different set of kmers for experiments
 unique_kmers = two_mers + three_mers
 # unique_kmers = three_mers
  
 df_kmers = pd.DataFrame(columns=unique_kmers)
 
-# Populate kmer columns (if a given kmer appears in the sequence or not)
+# Populate kmer columns
 for kmer in unique_kmers:
-    # df_kmers[kmer] = df.index.map(lambda x: 1 if kmer in df['Barcode'][x] else 0)
-    
     # Set column to count of kmers in sequence
     df_kmers[kmer] = df.index.map(lambda x: df['Barcode'][x].count(kmer) if kmer in df['Barcode'][x] else 0)
 
@@ -64,8 +58,8 @@ numerical_features = [
     'Cell.Type_PER.END_Age'
 ]
 
-print("features", numerical_features)
-print("num features", len(numerical_features))
+print("Numerical Features are ", numerical_features)
+print("Number of numerical features ", len(numerical_features))
 
 # Add unique kmer sequences as columns to df
 pca_kmers_df = run_pca(df_kmers)

@@ -17,7 +17,7 @@ def main(dataset):
     X = pd.read_csv(dataset)
     y_labels = pd.read_csv('data/processed_y.csv')
 
-    # Split dataset into train, test, validation
+    # Split Features and Predictions into train, test, validation
     x_train = X.loc[0:61262]
     x_test = X.loc[61262:61421]
     x_valid = X.loc[61421:61473]
@@ -25,36 +25,21 @@ def main(dataset):
     y_test = y_labels.loc[61262:61421]
     y_valid = y_labels.loc[61421:61473]
 
-    # print(y_valid)
-
-    # print("Train set length: ", len(x_train))
-
-    # x_train, x_test, y_train, y_test = train_test_split(X, y_labels, test_size=0.2, random_state=42)
-
     num_features = x_train.shape[1]
 
-    # encode categorical features that are relevant 
-
-    # X_num = (X_num - X_num.mean(axis=0)) / X_num.std(axis=0)  # Standardize features
-
-    # print(X.shape[0])
-    # print(y_labels.shape[0])
-
-    # Get the training tensors and also shuffle them
+    # Training Set Tensors
     X_tensor = torch.tensor(x_train.values, dtype=torch.float32).unsqueeze(1)
     y_tensor = torch.tensor(y_train.values, dtype=torch.float32).squeeze(1)
 
-    # Validation Tensors
+    # Validation Set Tensors
     X_valid_tensor = torch.tensor(x_valid.values, dtype=torch.float32).unsqueeze(1)
     y_valid_tensor = torch.tensor(y_valid.values, dtype=torch.float32).squeeze(1)
 
-    # Testing Tensors
+    # Testing Set Tensors
     X_test_tensor = torch.tensor(x_test.values, dtype=torch.float32).unsqueeze(1)
     y_test_tensor = torch.tensor(y_test.values, dtype=torch.float32).squeeze(1)
 
-    print("Number of NaNs in X_tensor:", torch.isnan(X_tensor).sum().item())
-
-
+    # Make sure to shuffle dataset
     dataset = TensorDataset(X_tensor, y_tensor)
     dataloader = DataLoader(dataset, batch_size=5, shuffle=True)
 
@@ -74,9 +59,6 @@ def main(dataset):
             # pooling reduces dimensions
             # self.fc1 = nn.Linear(32 * num_features - 64, 64)
             self.fc1 = nn.Linear(32 * num_features, 64)
-
-            # WITH POOLING (k=3, s=3)
-            # self.fc1 = nn.Linear(32 * 9, 64)
 
             self.fc2 = nn.Linear(64, 1)  # 2 classes
 
@@ -135,6 +117,7 @@ def main(dataset):
 
         print("Train Accuracy is :", correct / len(y_train), " after epoch ", epoch)
 
+    # TODO: Evaluate model on test dataset
     # # Evaluate the model on test dataset
     # model.eval()
     # with torch.no_grad():
@@ -164,14 +147,7 @@ def main(dataset):
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser()
-
     parser.add_argument('--dataset')
-
     args = parser.parse_args()
-
-    # print("args.dataset", args.dataset)
-    # print("type(args.dataset)", type(args.dataset))
-
     main(args.dataset)
