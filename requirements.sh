@@ -3,7 +3,7 @@
 # Script to create a Conda environment with Python 3.12, pandas, and scikit-learn
 
 # Name of the environment
-ENV_NAME="my_env"
+ENV_NAME="alzheimers"
 
 # Check if conda is installed
 if ! command -v conda &> /dev/null

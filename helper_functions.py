@@ -1,6 +1,7 @@
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 
 
@@ -74,6 +75,25 @@ def generate_cell_type_mapping(all_cell_types):
     return cell_type_mapping
 
 
+# generate gc percentages for each barcode
+def generate_gc_ratios(df):
+  gc_ratios = []
+  for barcode in df['Barcode']:
+    gc_count = 0
+    for nucleotide in barcode:
+      if nucleotide == 'G' or nucleotide == 'C':
+        gc_count += 1
+    
+    gc_ratio = gc_count / len(barcode)
+    gc_ratios.append(gc_ratio)
+  
+  return gc_ratios
+
+
+# def one_hot_encode_sex(df):
+#   df['Sex'] = df['Sex'].map(lambda x: 1 if x == 'F' else 0)
+
+
 def create_cell_type_age_feature(df):
     cell_df = pd.get_dummies(df, columns=['Cell.Type'], drop_first=True)
     scaler = StandardScaler()
@@ -91,35 +111,24 @@ def create_cell_type_age_feature(df):
     return interaction_df
 
 
-# def run_pca(all_one_hot_encodings, n_components):
-#     # First flatten all_one_hot_encodings and then turn it into a dataframe
-#     flattened_one_hot_encodings = [ [value for tupl in sequence for value in tupl] for sequence in all_one_hot_encodings ]
-
-#     X_normalized = pd.DataFrame(flattened_one_hot_encodings)
-
-#     # Define number of principal components to retain
-#     pca = PCA(n_components=n_components)
-#     X_pca = pca.fit_transform(X_normalized)
-#     pca_df = pd.DataFrame(data = X_pca, columns = ['PC1', 'PC2', 'PC3', 'PC4', 'PC5'])
-
-#     print(pca_df.head())
-#     print("Explained variance by each component:", pca.explained_variance_ratio_)
-
-#     return pca_df
-
-
 def run_pca(df):
     scaler = StandardScaler()
     df_scaled = scaler.fit_transform(df)
 
     # Initialize PCA, you can modify the number of components
-    pca = PCA(n_components=2)  # Adjust components based on your needs
+    pca = PCA(n_components=5)  # Adjust components based on your needs
     principal_components = pca.fit_transform(df_scaled)
 
     # Create a DataFrame with the principal components
     pca_df = pd.DataFrame(data=principal_components,
-                          columns=['PC1', 'PC2'],
+                          columns=['PC1', 'PC2', 'PC3', 'PC4', 'PC5'],
                           index=df.index)
+
+    explained_variance = pca.explained_variance_
+    explained_variance_ratio = pca.explained_variance_ratio_
+
+    print("VARIANCE OF PCA", explained_variance)
+    print("VARIANCE RATIO OF PCA", explained_variance_ratio)
 
     return pca_df
 

@@ -8,6 +8,8 @@ import torch.nn.functional as F
 from torch.utils.data import TensorDataset, DataLoader
 from sklearn.model_selection import train_test_split
 import argparse
+from sklearn.metrics import confusion_matrix
+from matplotlib import pyplot as plt
 # from torch.optim.lr_scheduler import StepLR
 
 
@@ -18,12 +20,35 @@ def main(dataset):
     y_labels = pd.read_csv('data/processed_y.csv')
 
     # Split dataset into train, test, validation
-    x_train = X.loc[0:61262]
-    x_test = X.loc[61262:61421]
-    x_valid = X.loc[61421:61473]
-    y_train = y_labels.loc[0:61262]
-    y_test = y_labels.loc[61262:61421]
-    y_valid = y_labels.loc[61421:61473]
+    # x_train = X.loc[0:61262]
+    # x_test = X.loc[61262:61421]
+    
+    # x_valid = X.loc[61421:61473]
+
+    # y_train = y_labels.loc[0:61262]
+    # y_test = y_labels.loc[61262:61421]
+    # y_valid = y_labels.loc[61421:61473]
+
+    x_train = X.iloc[:48173]
+    x_valid = X.iloc[48173:56316]
+    x_test = X.iloc[56316:]
+
+    print(x_train.shape)
+    print(x_valid.shape)
+
+    # print(x_train.iloc[-1:])
+    # print(x_valid.iloc[:1])
+    # print(x_test.iloc[:1])
+
+    y_train = y_labels.iloc[:48173]
+    y_valid = y_labels.iloc[48173:56316]
+    y_test = y_labels.iloc[56316:]
+
+    print(y_train.shape)
+    print(y_valid.shape)
+
+    # print(x_train[-2])
+    # print(x_train[-1])
 
     # print(y_valid)
 
@@ -73,9 +98,12 @@ def main(dataset):
 
             # pooling reduces dimensions
             # self.fc1 = nn.Linear(32 * num_features - 64, 64)
-            self.fc1 = nn.Linear(32 * num_features, 64)
+            # self.fc1 = nn.Linear(32 * num_features, 64)
 
-            # WITH POOLING (k=3, s=3)
+            # POOLING (k=3, s=3) wih PCA
+            self.fc1 = nn.Linear(32, 64)
+
+            # POOLING without PCA
             # self.fc1 = nn.Linear(32 * 9, 64)
 
             self.fc2 = nn.Linear(64, 1)  # 2 classes
@@ -83,9 +111,9 @@ def main(dataset):
         def forward(self, x):
 
             x = F.relu(self.conv1(x))  # conv1 -> ReLU -> Pool
-            # x = self.pool(x)
+            x = self.pool(x)
             x = F.relu(self.conv2(x))
-            # x = self.pool(x)
+            x = self.pool(x)
 
             x = torch.flatten(x, 1) # flatten all dimensions except batch size
 
@@ -106,8 +134,10 @@ def main(dataset):
     y_train = y_train.to_numpy()
     y_valid = y_valid.to_numpy()
 
+    training_accuracies = []
+
     # Training loop
-    epochs = 5
+    epochs = 10
     for epoch in range(epochs):
         model.train()
         for batch_X, batch_y in dataloader:
@@ -133,21 +163,21 @@ def main(dataset):
             if int(predictions[i]) == y_train[i]:
                 correct += 1
 
-        print("Train Accuracy is :", correct / len(y_train), " after epoch ", epoch)
+        train_accuracy = correct / len(y_train)
 
-    # # Evaluate the model on test dataset
-    # model.eval()
-    # with torch.no_grad():
-    #     predictions = model(X_test_tensor).squeeze()
-    #     predictions = (predictions > 0.5).float()  # Convert to binary predictions
-    #     print("Predictions:", predictions.numpy())
+        print("Train Accuracy is :", train_accuracy, " after epoch ", epoch)
 
-    # correct = 0
-    # for i in range(len(predictions)):
-    #     if int(predictions[i]) == y_test[i]:
-    #         correct += 1
+        training_accuracies.append(train_accuracy)
+    
 
-    # print("Test Accuracy is :", correct / len(y_test), " after epoch ", epoch)
+    # Plotting Training Accuracy
+    plt.figure(figsize=(8,5))
+    plt.plot(range(1, epochs + 1), training_accuracies, marker='o', linestyle='-', linewidth=2)
+    plt.xlabel("Epoch")
+    plt.ylabel("Training Accuracy")
+    plt.title("Training Accuracy Over Epochs")
+    plt.grid(True)
+    plt.show()
 
     # Evaluate the model on validation dataset to get the best hyperparameters
     model.eval()
@@ -160,8 +190,26 @@ def main(dataset):
         if int(predictions[i]) == y_valid[i]:
             correct += 1
 
-    print("Validation Accuracy is :", correct / len(y_valid), " after epoch ", epoch)
+    print("Validation Accuracy is:", correct / len(y_valid), "after epoch", epoch)
+    print("Size of Validation Dataset:", len(y_valid))
 
+    # Evaluate the model on test dataset
+    model.eval()
+    with torch.no_grad():
+        predictions = model(X_test_tensor).squeeze()
+        predictions = (predictions > 0.5).float()  # Convert to binary predictions
+        print("Predictions:", predictions.numpy())
+
+    correct = 0
+    for i in range(len(predictions)):
+        if int(predictions[i]) == y_test[i]:
+            correct += 1
+
+    print("Test Accuracy is :", correct / len(y_test), " after epoch ", epoch)
+
+    # generate confusion matrix for test dataset
+    cm = confusion_matrix(y_test, predictions)
+    print("CONFUSION MATRIX", cm)
 
 if __name__ == "__main__":
 
