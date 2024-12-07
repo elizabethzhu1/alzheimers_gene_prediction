@@ -69,8 +69,8 @@ precision_train = precision_score(y_train, y_pred_train)
 accuracy_test = accuracy_score(y_test, y_pred)
 precision_test = precision_score(y_test, y_pred)
 
-print(f"Test Accuracy: ", accuracy_test)
-print(f"Test Precision: ", precision_test)
+print("Test Accuracy: ", accuracy_test)
+print("Test Precision: ", precision_test)
 
-print(f"Train Accuracy: ", accuracy_train)
-print(f"Train Precision: ", precision_train)
+print("Train Accuracy: ", accuracy_train)
+print("Train Precision: ", precision_train)
