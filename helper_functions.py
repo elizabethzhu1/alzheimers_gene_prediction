@@ -31,7 +31,6 @@ def k_mer_sequences(encoded_seq, k):
       if i+k < len(encoded_seq):
         kmer_sequences.append(encoded_seq[i:i+k])
       else:
-        # print(kmer_sequences)
         return kmer_sequences
       
 
@@ -90,10 +89,9 @@ def generate_gc_ratios(df):
   return gc_ratios
 
 
-# def one_hot_encode_sex(df):
-#   df['Sex'] = df['Sex'].map(lambda x: 1 if x == 'F' else 0)
-
-
+# We want to acknowledge that although we came up with the idea of using interaction features,
+# we used ChatGPT in figuring out syntaxes for DataFrame processing to achieve the effects
+# of interaction features
 def create_cell_type_age_feature(df):
     cell_df = pd.get_dummies(df, columns=['Cell.Type'], drop_first=True)
     scaler = StandardScaler()
@@ -101,7 +99,7 @@ def create_cell_type_age_feature(df):
 
     for column in cell_df.columns:
         print(column)
-        if 'Cell' in column:  # Identify one-hot encoded cell type columns
+        if 'Cell' in column:
             cell_df[column] = cell_df[column].astype(int)
             cell_df[f'{column}_Age'] = cell_df[column] * cell_df['Age']
 
@@ -111,18 +109,16 @@ def create_cell_type_age_feature(df):
     return interaction_df
 
 
+# We want to acknowledge that while we came up with the idea of running PCA, we used ChatGPT 
+# in conceptualizing how to write the PCA code and specific syntaxes for achieving the PCA effects.
 def run_pca(df):
     scaler = StandardScaler()
     df_scaled = scaler.fit_transform(df)
 
-    # Initialize PCA, you can modify the number of components
-    pca = PCA(n_components=5)  # Adjust components based on your needs
+    pca = PCA(n_components=5)
     principal_components = pca.fit_transform(df_scaled)
 
-    # Create a DataFrame with the principal components
-    pca_df = pd.DataFrame(data=principal_components,
-                          columns=['PC1', 'PC2', 'PC3', 'PC4', 'PC5'],
-                          index=df.index)
+    pca_df = pd.DataFrame(data=principal_components, columns=['PC1', 'PC2', 'PC3', 'PC4', 'PC5'], index=df.index)
 
     explained_variance = pca.explained_variance_
     explained_variance_ratio = pca.explained_variance_ratio_
@@ -131,14 +127,3 @@ def run_pca(df):
     print("VARIANCE RATIO OF PCA", explained_variance_ratio)
 
     return pca_df
-
-
-def visualize_pca(pca_df):
-   # Visualization for PCA on the first two principal components of the kmer sequences
-    plt.figure(figsize=(8, 6))
-    plt.scatter(pca_df['PC1'], pca_df['PC2'])
-    plt.xlabel('Principal Component 1')
-    plt.ylabel('Principal Component 2')
-    plt.title('PCA of Kmer sequences for DNA')
-    plt.grid(True)
-    plt.show()

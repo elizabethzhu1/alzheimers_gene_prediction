@@ -10,7 +10,6 @@ from sklearn.model_selection import train_test_split
 import argparse
 from sklearn.metrics import confusion_matrix
 from matplotlib import pyplot as plt
-# from torch.optim.lr_scheduler import StepLR
 
 
 def main(dataset):
@@ -20,25 +19,12 @@ def main(dataset):
     y_labels = pd.read_csv('data/processed_y.csv')
 
     # Split dataset into train, test, validation
-    # x_train = X.loc[0:61262]
-    # x_test = X.loc[61262:61421]
-    
-    # x_valid = X.loc[61421:61473]
-
-    # y_train = y_labels.loc[0:61262]
-    # y_test = y_labels.loc[61262:61421]
-    # y_valid = y_labels.loc[61421:61473]
-
     x_train = X.iloc[:48173]
     x_valid = X.iloc[48173:56316]
     x_test = X.iloc[56316:]
 
     print(x_train.shape)
     print(x_valid.shape)
-
-    # print(x_train.iloc[-1:])
-    # print(x_valid.iloc[:1])
-    # print(x_test.iloc[:1])
 
     y_train = y_labels.iloc[:48173]
     y_valid = y_labels.iloc[48173:56316]
@@ -47,9 +33,6 @@ def main(dataset):
     print(y_train.shape)
     print(y_valid.shape)
 
-    # print(x_train[-2])
-    # print(x_train[-1])
-
     # print(y_valid)
 
     # print("Train set length: ", len(x_train))
@@ -57,10 +40,6 @@ def main(dataset):
     # x_train, x_test, y_train, y_test = train_test_split(X, y_labels, test_size=0.2, random_state=42)
 
     num_features = x_train.shape[1]
-
-    # encode categorical features that are relevant 
-
-    # X_num = (X_num - X_num.mean(axis=0)) / X_num.std(axis=0)  # Standardize features
 
     # print(X.shape[0])
     # print(y_labels.shape[0])
@@ -218,8 +197,5 @@ if __name__ == "__main__":
     parser.add_argument('--dataset')
 
     args = parser.parse_args()
-
-    # print("args.dataset", args.dataset)
-    # print("type(args.dataset)", type(args.dataset))
 
     main(args.dataset)

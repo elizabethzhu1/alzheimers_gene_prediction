@@ -96,6 +96,4 @@ df.to_csv('data/processed_X.csv', index=False)
 df_pca.to_csv('data/processed_X_pca.csv', index=False)
 y_labels.to_csv('data/processed_y.csv', index=False)
 
-# add main() function and pass in input data as argument
-
 print("df.shape", df.shape)
