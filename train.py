@@ -3,17 +3,15 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 import pandas as pd
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 import torch.nn.functional as F
 from torch.utils.data import TensorDataset, DataLoader
-from sklearn.model_selection import train_test_split
 import argparse
 from sklearn.metrics import confusion_matrix
 from matplotlib import pyplot as plt
 
 
 def main(dataset):
-
     # Prepare the data
     X = pd.read_csv(dataset)
     y_labels = pd.read_csv('data/processed_y.csv')
@@ -33,16 +31,7 @@ def main(dataset):
     print(y_train.shape)
     print(y_valid.shape)
 
-    # print(y_valid)
-
-    # print("Train set length: ", len(x_train))
-
-    # x_train, x_test, y_train, y_test = train_test_split(X, y_labels, test_size=0.2, random_state=42)
-
     num_features = x_train.shape[1]
-
-    # print(X.shape[0])
-    # print(y_labels.shape[0])
 
     # Get the training tensors and also shuffle them
     X_tensor = torch.tensor(x_train.values, dtype=torch.float32).unsqueeze(1)
@@ -75,10 +64,6 @@ def main(dataset):
 
             self.conv2 = nn.Conv1d(in_channels=16, out_channels=32, kernel_size=3, padding=1)
 
-            # pooling reduces dimensions
-            # self.fc1 = nn.Linear(32 * num_features - 64, 64)
-            # self.fc1 = nn.Linear(32 * num_features, 64)
-
             # POOLING (k=3, s=3) wih PCA
             self.fc1 = nn.Linear(32, 64)
 
@@ -107,7 +92,6 @@ def main(dataset):
     # Define loss and optimizer
     criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.0001)
-    # scheduler = StepLR(optimizer, step_size=3, gamma=0.1)  # Reduce LR by 0.1 every 5 epochs
 
     y_test = y_test.to_numpy()
     y_train = y_train.to_numpy()
@@ -125,9 +109,7 @@ def main(dataset):
             loss = criterion(outputs, batch_y)
             loss.backward()
             optimizer.step()
-        
-        # scheduler.step()
-        
+                
         print(f"Epoch {epoch+1}/{epochs}, Loss: {loss.item():.4f}")
 
         # Evaluate the model on train dataset

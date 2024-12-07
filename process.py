@@ -1,6 +1,5 @@
 import pandas as pd
-from helper_functions import encoding, k_mer_sequences, create_kmer_count, run_pca, visualize_pca, generate_cell_type_mapping, create_cell_type_age_feature, generate_unique_kmers, run_pca, generate_gc_ratios
-from sklearn.preprocessing import StandardScaler
+from helper_functions import run_pca, generate_cell_type_mapping, create_cell_type_age_feature, generate_unique_kmers, run_pca, generate_gc_ratios
 
 # Read in our data
 df = pd.read_csv('data/alzheimers_RNA_data.csv', header=None)
@@ -21,7 +20,7 @@ df['frequency'] = df['SampleID'].map(sample_counts)
 
 # Sort the DataFrame by frequency (descending by default)
 df_sorted = df.sort_values(by='frequency', ascending=False).reset_index(drop=True)
-
+df_sorted = df_sorted.drop(columns='frequency')
 df_sorted.to_csv('data/alzheimers_RNA_data_sorted.csv', index=False)
 
 # Retrieve diagnosis column
@@ -29,11 +28,18 @@ diagnosis = df['Diagnosis'].to_list()
 
 # Encode diagnosis data into y_labels column
 y_labels = []
+AD = 0
+control = 0
 for diag in df["Diagnosis"]:
   if diag == "AD":
     y_labels.append(1)
+    AD += 1
   else:
     y_labels.append(0)
+    control += 1
+
+print("AD count: ", AD)
+print("Control count:  ", control)
 
 y_labels = pd.DataFrame(y_labels)
 
@@ -82,9 +88,6 @@ print("num features", len(numerical_features))
 
 # Add unique kmer sequences as columns to df
 pca_kmers_df = run_pca(df_kmers)
-
-# visualize the variance of PCA
-# visualize_pca(pca_kmers_df)
 
 # Add pca-reduced kmer sequences as columns to df
 df_pca = pd.concat([df[numerical_features], pca_kmers_df], axis=1)

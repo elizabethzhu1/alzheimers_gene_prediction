@@ -1,8 +1,6 @@
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 
 
 def one_hot_encode(nucleotide):
